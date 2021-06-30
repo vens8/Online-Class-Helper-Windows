@@ -1,5 +1,5 @@
 # Online-Class-Helper
-Attend online classes with one link!
+Attend online classes with one click!
 
 OCH - Online Class Helper is a tool made for students attending online classes which allows them to join and attend their classes hassle-free with a single click. Unable to organize all your class links throughout your week? Add your classes once they're organized and tabulated. You can also make and share templates with your friends which can save them time.
 
@@ -27,5 +27,5 @@ Do not modify/delete any of the files in the root directory or it will result in
 For any bugs, issues, help, feature requests, contact me via the Help>>Contact on OCH or my contact details are as follows:
 
 - Personal E-mail: vensr.maddula@gmail.com
-- Personal Instagram: @vens8
+- Personal Instagram: https://www.instagram.com/vens8/
 
