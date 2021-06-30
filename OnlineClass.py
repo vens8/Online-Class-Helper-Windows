@@ -129,6 +129,7 @@ system_out.close()
 system_in = open("data/system_values.dat", "rb")
 data = pickle.load(system_in)
 system_in.close()
+
 pickle_in = open(data, "rb")
 classes = pickle.load(pickle_in)
 pickle_in.close()
@@ -155,7 +156,7 @@ def load_file():
 
 
 def sortRecords():
-    global classes
+    global classes, data
     for record in classes:
         record[1].sort(key=lambda x: x[1])
     pickle_out = open(data, "wb")  # updates the dat file with sorted records
@@ -165,7 +166,7 @@ def sortRecords():
 
 def live_status():
     message2.config(text=live_status2())
-    global classes
+    global classes, data
     pickle_in = open(data, "rb")  # reads the dat file for records
     classes = pickle.load(pickle_in)
     pickle_in.close()
@@ -187,7 +188,7 @@ def live_status():
 
 
 def live_status2():
-    global classes
+    global classes, data
     pickle_in = open(data, "rb")  # reads the dat file for records
     classes = pickle.load(pickle_in)
     pickle_in.close()
@@ -203,7 +204,8 @@ def live_status2():
                     if current_time >= j[1] and current_time < j[2]:
                         if j != i[1][-1]:  # Accessing the next class available in the records
                             status = f"Next class:      {i[1][i[1].index(j) + 1][0]}\nStart time:      {i[1][i[1].index(j) + 1][1]}\nEnd time:        {i[1][i[1].index(j) + 1][2]}\n"
-                            button9['state'] = 'active'
+                            if button9['state'] == 'disabled':
+                                button9['state'] = 'active'
                             return status
                         else:
                             status = "Phew, no other classes today!"
@@ -272,7 +274,7 @@ def CreateToolTip(widget, text):
 
 
 def Join():
-    global classes
+    global classes, data
     pickle_in = open(data, "rb")  # read the dat file for records
     classes = pickle.load(pickle_in)
     pickle_in.close()
@@ -295,7 +297,7 @@ def Join():
 
 
 def JoinNext():
-    global classes
+    global classes, data
     pickle_in = open(data, "rb")  # read the dat file for records
     classes = pickle.load(pickle_in)
     pickle_in.close()
@@ -378,7 +380,7 @@ def addclass(event=None):
 
 
 def removeClass():
-    global classes
+    global classes, data
     if tree1.selection() != ():
         if not any(i in ('0', '1', '2', '3', '4', '5', '6') for i in tree1.selection()):
             result = messagebox.askquestion("Delete Record",
@@ -412,7 +414,7 @@ def removeClass():
 
 
 def removeAll():
-    global classes
+    global classes, data
     result = messagebox.askquestion("Clear Table",
                                     "Are you sure you want to delete the entire table? (There's no undo here)",
                                     icon='warning', default='no')
@@ -471,7 +473,7 @@ button9.place(x=70, y=100)
 
 
 def updateClass():
-    global classes, record_no
+    global classes, record_no, data
     if tree1.selection() != ():
         if ('0' or '1' or '2' or '3' or '4' or '5' or '6') not in tree1.selection():
             values = tree1.item(record_no)['values']
