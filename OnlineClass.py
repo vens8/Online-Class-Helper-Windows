@@ -19,6 +19,7 @@ __version__ = '1.0.0'
 __maintainer__ = 'Rahul Maddula'
 __email__ = 'vensr.maddula@gmail.com'
 
+# update the code with states of updateclass button
 now = datetime.now()  # Doesn't update with change of time. Uses same value from the time of execution.
 today = date.today().weekday()  # 0 is Monday and 6 is Sunday
 current_time = time.strftime("%H:%M:%S")
@@ -41,7 +42,7 @@ def homemenu():
     frame3.place_forget()
     frame4.place_forget()
     frame1.grid(pady=0, padx=0)
-    frame1.place(width=root.winfo_screenwidth(), height=root.winfo_screenheight())
+    frame1.place(relwidth=1, relheight=1, relx=0, rely=0)
 
 
 def classesmenu():
@@ -97,15 +98,15 @@ frame1 = tk.Frame(root, bg="black")  # Frame placed inside the canvas. Same colo
 frame1.grid(sticky=N + E + W + S, row=0, column=0, pady=0, padx=0)
 frame1.grid_rowconfigure(0, weight=1)
 frame1.grid_columnconfigure(0, weight=1)
-frame1.place(width=canvas.winfo_screenwidth(), height=canvas.winfo_screenheight())
+frame1.place(relwidth=1, relheight=1)
 
 # Other frames
 frame2 = Frame(root, bg="black")  # Classes
 frame3 = Frame(root, bg="black")  # About
 frame4 = Frame(root, bg="black")  # Help
 frame6 = tk.Frame(frame1, bg="#2B2B26")  # NextClass
-frame6.place(width=root.winfo_screenwidth() / 6, height=root.winfo_screenheight() / 6, x=root.winfo_screenwidth() - 300,
-             y=root.winfo_screenheight() - 825)
+frame6.place(relwidth=0.18, relheight=0.2, relx=0.8,
+             rely=0.05)
 
 root.title('Online Class Helper')  # Text to display on the title bar of the application
 root.state('zoomed')  # Opens the maximised version of the window by default
@@ -178,7 +179,8 @@ def live_status():
     pickle_in = open(data, "rb")  # reads the dat file for records
     classes = pickle.load(pickle_in)
     pickle_in.close()
-    if len(classes) == 0 or (len(classes[0][1]) == 0 and len(classes[1][1]) == 0 and len(classes[2][1]) == 0 and len(classes[3][1]) == 0 and len(classes[4][1]) == 0 and len(classes[5][1]) == 0 and len(classes[6][1]) == 0):
+    if len(classes) == 0 or (len(classes[0][1]) == 0 and len(classes[1][1]) == 0 and len(classes[2][1]) == 0 and len(
+            classes[3][1]) == 0 and len(classes[4][1]) == 0 and len(classes[5][1]) == 0 and len(classes[6][1]) == 0):
         status = "You haven't set up any classes yet.\nPlease add them in the 'Classes' tab."
         return status
     else:
@@ -189,9 +191,9 @@ def live_status():
                     if current_time >= j[1] and current_time < j[2]:
                         status = f"Current class:        {j[0]}\nStart time:            {j[1]}\nEnd time:              {j[2]}\n"
                         return status
-                status = f"    No ongoing class currently"
+                status = f"No ongoing class currently"
                 return status
-        status = f"    No ongoing class currently"
+        status = f"No ongoing class currently"
         return status
 
 
@@ -200,7 +202,8 @@ def live_status2():
     pickle_in = open(data, "rb")  # reads the dat file for records
     classes = pickle.load(pickle_in)
     pickle_in.close()
-    if len(classes) == 0 or (len(classes[0][1]) == 0 and len(classes[1][1]) == 0 and len(classes[2][1]) == 0 and len(classes[3][1]) == 0 and len(classes[4][1]) == 0 and len(classes[5][1]) == 0 and len(classes[6][1]) == 0):
+    if len(classes) == 0 or (len(classes[0][1]) == 0 and len(classes[1][1]) == 0 and len(classes[2][1]) == 0 and len(
+            classes[3][1]) == 0 and len(classes[4][1]) == 0 and len(classes[5][1]) == 0 and len(classes[6][1]) == 0):
         status = "Setup incomplete"
         button9['state'] = 'disabled'
         return status
@@ -214,6 +217,7 @@ def live_status2():
                             status = f"Next class:      {i[1][i[1].index(j) + 1][0]}\nStart time:      {i[1][i[1].index(j) + 1][1]}\nEnd time:        {i[1][i[1].index(j) + 1][2]}\n"
                             if button9['state'] == 'disabled':
                                 button9['state'] = 'active'
+                                status = "test"
                             return status
                         else:
                             status = "Phew, no other classes today!"
@@ -333,7 +337,7 @@ def JoinNext():
 
 
 def addclass(event=None):
-    global classes
+    global classes, url
     if combo1.get() == "--Select Day--":
         messagebox.showinfo("Invalid day", "Please select a valid day (Monday-Sunday)")
     else:
@@ -368,9 +372,14 @@ def addclass(event=None):
                     if "." not in entry4.get() or entry4.get() == "--valid url--":
                         messagebox.showinfo("Invalid URL", "Please enter a valid url (.com, .net, .org, etc.)")
                     else:
+                        if not entry4.get().startswith('http'):
+                            if entry4.get().startswith('www'):
+                                url = "http://" + entry4.get()
+                            else:
+                                url = "http://www." + entry4.get()
                         for i in classes:
                             if i[0] == days.index(combo1.get()) - 1:
-                                newdata = [entry1.get(), entry2.get(), entry3.get(), entry4.get()]
+                                newdata = [entry1.get(), entry2.get(), entry3.get(), url]
                                 if newdata not in i[1]:
                                     delete = open(data, "wb")  # clear existing data from the data file first
                                     pickle.dump([], delete)
@@ -477,7 +486,7 @@ button9 = Button(frame6, image=img15, command=JoinNext, borderwidth=0, bg="#2B2B
 button9.grid(sticky=N + E + W + S)
 button9.grid_rowconfigure(0, weight=100)
 button9.grid_columnconfigure(0, weight=100)
-button9.place(x=70, y=100)
+button9.place(relx=0.25, rely=0.7)
 
 
 def updateClass():
@@ -492,6 +501,7 @@ def updateClass():
                             j.clear()
                             i[1] = [x for x in i[1] if
                                     x]  # replaces i[1] after removing all empty sub lists in i[1]
+                            addclass()
                             tree1.delete(record_no)
                             break
                     break
@@ -506,8 +516,6 @@ def updateClass():
             messagebox.showinfo("Unable to update", "Make sure you're only selecting classes and not the day headings.")
     else:
         messagebox.showinfo("No record selected", "Please select a record that you want to update.")
-    addclass()
-    button8["state"] = "disabled"
 
 
 def all_clear():
@@ -523,19 +531,19 @@ def all_clear():
 
 # Message1
 message1 = Message(frame1, text="", font=('Verdana', 15), borderwidth=2, bg="black", fg="yellow", justify="left",
-                   aspect=700)
+                   aspect=int(root.winfo_screenwidth() / 2))
 message1.grid(sticky=N + E + W + S)
 message1.grid_rowconfigure(0, weight=100)
 message1.grid_columnconfigure(0, weight=100)
-message1.place(x=root.winfo_screenwidth() / 2 - 170, y=400)
+message1.place(relx=0.425, rely=0.55)
 
 # Message2
 message2 = Message(frame6, bg="#2B2B26", fg="yellow", text="", relief=FLAT, justify="left", font=('Verdana', 11),
-                   aspect=500)
+                   aspect=int(frame6.winfo_screenwidth() - 20))
 message2.grid(sticky=N + E + W + S)
 message2.grid_rowconfigure(0, weight=100)
 message2.grid_columnconfigure(0, weight=100)
-message2.place(x=15, y=15)
+message2.place(relx=0.1, rely=0.2)
 clock()  # Call the function clock which recursively calls itself every second.
 
 # Button1
@@ -544,7 +552,7 @@ button1 = Button(frame1, image=img, command=Join, borderwidth=0, bg="black", rel
 button1.grid(sticky=N + E + W + S)
 button1.grid_rowconfigure(0, weight=100)
 button1.grid_columnconfigure(0, weight=100)
-button1.place(x=root.winfo_screenwidth() / 2 - 60, y=550)
+button1.place(relx=0.455, rely=0.68)
 
 # Button2
 img2 = PhotoImage(file="images/NewClassButton.png")  # add "/" not "\"
@@ -552,7 +560,7 @@ button2 = Button(frame2, image=img2, command=addclass, borderwidth=0, bg="black"
 button2.grid(sticky=N + E + W + S)
 button2.grid_rowconfigure(0, weight=100)
 button2.grid_columnconfigure(0, weight=100)
-button2.place(x=root.winfo_screenwidth() - 235, y=235)
+button2.place(relx=0.815, rely=0.335)
 
 # Button3
 img9 = PhotoImage(file="images/ClearButton.png")
@@ -560,7 +568,7 @@ button3 = Button(frame2, image=img9, command=all_clear, borderwidth=0, bg="black
 button3.grid(sticky=N + E + W + S)
 button3.grid_rowconfigure(0, weight=100)
 button3.grid_columnconfigure(0, weight=100)
-button3.place(x=1175, y=72)
+button3.place(relx=0.8, rely=0.12)
 
 # Button4
 img10 = PhotoImage(file="images/RemoveSelectedClassesButton.png")  # add "/" not "\"
@@ -568,7 +576,7 @@ button4 = Button(frame2, image=img10, command=removeClass, borderwidth=0, bg="bl
 button4.grid(sticky=N + E + W + S)
 button4.grid_rowconfigure(0, weight=100)
 button4.grid_columnconfigure(0, weight=100)
-button4.place(x=185, y=660)
+button4.place(relx=0.05, rely=0.92)
 CreateToolTip(button4, "Hold the control button and select the records you want to delete")
 
 # Button5
@@ -577,7 +585,7 @@ button5 = Button(frame2, image=img11, command=removeAll, borderwidth=0, bg="blac
 button5.grid(sticky=N + E + W + S)
 button5.grid_rowconfigure(0, weight=100)
 button5.grid_columnconfigure(0, weight=100)
-button5.place(x=root.winfo_screenwidth() - 240, y=700)
+button5.place(relx=0.81, rely=0.92)
 
 # Button6
 img12 = PhotoImage(file="images/EditButton.png")  # add "/" not "\"
@@ -585,7 +593,7 @@ button6 = Button(frame2, image=img12, command=editClass, borderwidth=0, bg="blac
 button6.grid(sticky=N + E + W + S)
 button6.grid_rowconfigure(0, weight=100)
 button6.grid_columnconfigure(0, weight=100)
-button6.place(x=75, y=660)
+button6.place(relx=0.05, rely=0.85)
 
 # Button8
 img13 = PhotoImage(file="images/UpdateClassButton.png")  # add "/" not "\"
@@ -593,8 +601,7 @@ button8 = Button(frame2, image=img13, command=updateClass, borderwidth=0, bg="bl
 button8.grid(sticky=N + E + W + S)
 button8.grid_rowconfigure(0, weight=100)
 button8.grid_columnconfigure(0, weight=100)
-button8.place(x=root.winfo_screenwidth() - 232, y=175)
-button8["state"] = "disabled"
+button8.place(relx=0.82, rely=0.25)
 
 # Combo1
 days = [
@@ -619,7 +626,7 @@ label9 = Label(frame1, image=img16, borderwidth=0, bg="black")
 label9.grid(sticky=N + E + W + S, pady=0, padx=0)
 label9.grid_columnconfigure(0, weight=100)
 label9.grid_rowconfigure(0, weight=100)
-label9.place(x=root.winfo_screenwidth() / 2 - 87, y=30)
+label9.place(relx=0.438, rely=0.03)
 
 logo2 = Image.open("images/OCH_Logo2.png")
 logo2 = logo2.resize((100, 98), Image.ANTIALIAS)
@@ -628,13 +635,12 @@ label10 = Label(frame2, image=img17, borderwidth=0, bg="black")
 label10.grid(sticky=N + E + W + S, pady=0, padx=0)
 label10.grid_columnconfigure(0, weight=100)
 label10.grid_rowconfigure(0, weight=100)
-label10.place(x=root.winfo_screenwidth() - 200, y=40)
+label10.place(relx=0.85, rely=0.07)
 
 # Label Frame (Add Class)
-labelframe1 = LabelFrame(frame2, bg="black", font=("Helvetica", 12), foreground="yellow", text="Add Class", height=175,
-                         width=1100)
+labelframe1 = LabelFrame(frame2, bg="black", font=("Helvetica", 12), foreground="yellow", text="Add Class")
 labelframe1.grid(sticky=N + E + W + S)
-labelframe1.place(x=75, y=75)
+labelframe1.place(relwidth=0.75, relheight=0.25, relx=0.05, rely=0.13)
 
 # Label1
 img4 = PhotoImage(file="images/ChooseDayLabel.png")
@@ -642,7 +648,7 @@ label1 = Label(labelframe1, bg="black", image=img4, command=None, relief=FLAT)
 label1.grid(sticky=N + E + W + S)
 label1.grid_rowconfigure(0, weight=100)
 label1.grid_columnconfigure(0, weight=100)
-label1.place(x=20, y=30)
+label1.place(relx=0.02, rely=0.18)
 
 # Label2
 img5 = PhotoImage(file="images/EnterSubjectLabel.png")
@@ -650,7 +656,7 @@ label2 = Label(labelframe1, bg="black", image=img5, command=None, relief=FLAT)
 label2.grid(sticky=N + E + W + S)
 label2.grid_rowconfigure(0, weight=100)
 label2.grid_columnconfigure(0, weight=100)
-label2.place(x=20, y=95)
+label2.place(relx=0.02, rely=0.61)
 
 # Label3
 img6 = PhotoImage(file="images/StartTimeLabel.png")
@@ -658,7 +664,7 @@ label3 = Label(labelframe1, bg="black", image=img6, command=None, relief=FLAT)
 label3.grid(sticky=N + E + W + S)
 label3.grid_rowconfigure(0, weight=100)
 label3.grid_columnconfigure(0, weight=100)
-label3.place(x=350, y=30)
+label3.place(relx=0.36, rely=0.18)
 
 # Label4
 img7 = PhotoImage(file="images/EndTimeLabel.png")
@@ -666,7 +672,7 @@ label4 = Label(labelframe1, bg="black", image=img7, command=None, relief=FLAT)
 label4.grid(sticky=N + E + W + S)
 label4.grid_rowconfigure(0, weight=100)
 label4.grid_columnconfigure(0, weight=100)
-label4.place(x=350, y=95)
+label4.place(relx=0.36, rely=0.61)
 
 # Label5
 img8 = PhotoImage(file="images/ClassLinkLabel.png")
@@ -674,7 +680,7 @@ label5 = Label(labelframe1, bg="black", image=img8, command=None, relief=FLAT)
 label5.grid(sticky=N + E + W + S)
 label5.grid_rowconfigure(0, weight=100)
 label5.grid_columnconfigure(0, weight=100)
-label5.place(x=670, y=30)
+label5.place(relx=0.67, rely=0.18)
 
 # Label6
 abouttext = '''Copyright (C) Ravens Enterprises - All Rights Reserved
@@ -693,7 +699,7 @@ OCH was designed and programmed by Rahul Maddula
 You can interact or contact me for any information through my email and social media handles given on Help>>Contact'''
 
 label6 = Label(frame3, text=abouttext, font=('Times New Roman', 18), borderwidth=0, bg="black", fg="yellow")
-label6.grid(sticky=N+E+W+S)
+label6.grid(sticky=N + E + W + S)
 label6.grid_rowconfigure(0, weight=100)
 label6.grid_columnconfigure(0, weight=100)
 label6.place(relheight=1.3, relwidth=1)
@@ -705,7 +711,7 @@ label8 = Label(frame3, image=img18, borderwidth=0, bg="black")
 label8.grid(sticky=N + E + W + S, pady=0, padx=0)
 label8.grid_columnconfigure(0, weight=100)
 label8.grid_rowconfigure(0, weight=100)
-label8.place(x=root.winfo_screenwidth() / 2 - 90, y=60)
+label8.place(relx=0.438, rely=0.075)
 
 # Label7
 helptext = '''For any kind of bugs/issues/help/details please contact the owner through the following:
@@ -716,19 +722,19 @@ Personal Twitter handle: @vens_8
 '''
 
 label7 = Label(frame4, text=helptext, font=('Times New Roman', 18), borderwidth=0, bg="black", fg="yellow")
-label7.grid(sticky=N+E+W+S)
+label7.grid(sticky=N + E + W + S)
 label7.grid_rowconfigure(0, weight=100)
 label7.grid_columnconfigure(0, weight=100)
 label7.place(relheight=1, relwidth=1)
 
 # Combo1 - Drop down menu
-combo1 = ttk.Combobox(labelframe1, value=days, state="readonly", style="TCombobox", width=21)
+combo1 = ttk.Combobox(labelframe1, value=days, state="readonly", style="TCombobox")
 combo1.current(0)
 combo1.bind("<<ComboboxSelected>>", None)
 combo1.grid(sticky=N + E + W + S)
 combo1.grid_rowconfigure(0, weight=100)
 combo1.grid_columnconfigure(0, weight=100)
-combo1.place(x=150, y=35)
+combo1.place(relx=0.165, rely=0.2, relwidth=0.165)
 
 
 def e2_clear(event):
@@ -752,7 +758,7 @@ entry1 = Entry(labelframe1, fg="yellow", bg="black", highlightcolor="green", hig
 entry1.grid(sticky=N + E + W + S)
 entry1.grid_rowconfigure(0, weight=100)
 entry1.grid_columnconfigure(0, weight=100)
-entry1.place(x=150, y=98)
+entry1.place(relx=0.165, rely=0.64, relwidth=0.165)
 
 # Entry2
 entry2 = Entry(labelframe1, fg="yellow", bg="black", highlightcolor="green", highlightthickness=0.5, justify="left",
@@ -762,7 +768,7 @@ entry2.grid(sticky=N + E + W + S)
 entry2.grid_rowconfigure(0, weight=100)
 entry2.grid_columnconfigure(0, weight=100)
 entry2.bind("<FocusIn>", e2_clear)
-entry2.place(x=460, y=33)
+entry2.place(relx=0.48, rely=0.21, relwidth=0.165)
 
 # Entry3
 entry3 = Entry(labelframe1, fg="yellow", bg="black", highlightcolor="green", highlightthickness=0.5, justify="left",
@@ -772,7 +778,7 @@ entry3.grid(sticky=N + E + W + S)
 entry3.grid_rowconfigure(0, weight=100)
 entry3.grid_columnconfigure(0, weight=100)
 entry3.bind("<FocusIn>", e3_clear)
-entry3.place(x=460, y=98)
+entry3.place(relx=0.48, rely=0.64, relwidth=0.165)
 
 # Entry4
 entry4 = Entry(labelframe1, fg="yellow", bg="black", highlightcolor="green", highlightthickness=0.5, justify="left",
@@ -782,18 +788,18 @@ entry4.grid(sticky=N + E + W + S)
 entry4.grid_rowconfigure(0, weight=100)
 entry4.grid_columnconfigure(0, weight=100)
 entry4.bind("<FocusIn>", e4_clear)
-entry4.place(x=785, y=33)
+entry4.place(relx=0.79, rely=0.21, relwidth=0.2)
 
 # Tree view frame
 frame5 = tk.Frame(frame2, bg="black")
 frame5.grid(sticky=N + E + W + S, row=0, column=0, pady=0, padx=0)
 frame5.grid_rowconfigure(0, weight=1)
 frame5.grid_columnconfigure(0, weight=1)
-frame5.place(width=frame2.winfo_screenwidth() - 63, height=frame2.winfo_screenheight() / 2 - 85, x=0, y=300)
+frame5.place(relx=0.05, rely=0.42, relwidth=0.96, relheight=0.4)
 
 # Scrollbar
 scrollbar1 = ttk.Scrollbar(frame5, orient=VERTICAL)
-scrollbar1.grid(sticky=N + S + W, row=0, column=1)
+scrollbar1.grid(sticky=N + S + E + W, row=0, column=1)
 scrollbar1.grid_rowconfigure(0, weight=1)
 scrollbar1.grid_columnconfigure(0, weight=1)
 
@@ -872,14 +878,14 @@ def fill_table():
 
 fill_table()
 tree1.grid(pady=20, padx=20)
-tree1.place(width=frame2.winfo_screenwidth() * 9 / 10, height=frame2.winfo_screenheight() * 2 / 5 + 2, x=75, y=0)
+tree1.place(relx=0, rely=0, relwidth=0.937, relheight=1)
 
 # Button 7
 img3 = PhotoImage(file="images/LoadDataButton.png")
-button7 = Button(frame2, image=img3, command=load_file, borderwidth=0, bg="black", relief=FLAT)
+button7 = Button(frame2, image=img3, command=load_file, borderwidth=0, bg="black", relief=RIDGE)
 button7.grid(sticky=N + E + W + S)
 button7.grid_rowconfigure(0, weight=100)
 button7.grid_columnconfigure(0, weight=100)
-button7.place(x=root.winfo_screenwidth() - 180, y=660)
+button7.place(relx=0.857, rely=0.85)
 
 root.mainloop()
