@@ -11,6 +11,14 @@ import webbrowser
 from tkinter import filedialog as fd
 from PIL import Image, ImageTk
 
+__author__ = 'Rahul Maddula'
+__copyright__ = 'Copyright (C) 2021, Ravens Enterprises'
+__credits__ = ['Rahul Maddula']
+__license__ = 'GNU General Public License v3.0'
+__version__ = '1.0.0'
+__maintainer__ = 'Rahul Maddula'
+__email__ = 'vensr.maddula@gmail.com'
+
 now = datetime.now()  # Doesn't update with change of time. Uses same value from the time of execution.
 today = date.today().weekday()  # 0 is Monday and 6 is Sunday
 current_time = time.strftime("%H:%M:%S")
