@@ -16,7 +16,9 @@ OCH - Online Class Helper is a tool made for students attending online classes w
 
 - Download and run the OCH_setup.exe file.
 
-- Set up your classes by going to the Add/Edit classes tab. You can also load a .dat/.txt template using the 'load file' button. Note: Manually modified files won't work as they should be binary files and must be generated through OCH.
+- Set up your classes by going to the Add/Edit classes tab. You can also load a .dat/.txt template using the 'load file' button. So you can make and share templates of your classes with each other! 
+
+  Note: Manually modified files won't work as they should be binary files and must be generated through OCH.
 
 - You're done! Head back to the main page and you will find your class details at the corresponding time. Good luck, and happy learning!
 
