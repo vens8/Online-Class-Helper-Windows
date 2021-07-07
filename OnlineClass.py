@@ -8,6 +8,7 @@ import pickle  # Store and load data locally in the form of bytestream
 import os
 import time
 import webbrowser
+import requests  # For updates (File reading)
 from tkinter import filedialog as fd
 from PIL import Image, ImageTk
 
@@ -15,9 +16,10 @@ __author__ = 'Rahul Maddula'
 __copyright__ = 'Copyright (C) 2021, Ravens Enterprises'
 __credits__ = ['Rahul Maddula']
 __license__ = 'GNU General Public License v3.0'
-__version__ = '1.0.0'
+__version__ = "1.0.0"
 __maintainer__ = 'Rahul Maddula'
 __email__ = 'vensr.maddula@gmail.com'
+__AppName__ = 'OCH'
 
 # update the code with states of updateclass button
 now = datetime.now()  # Doesn't update with change of time. Uses same value from the time of execution.
@@ -41,6 +43,10 @@ def homemenu():
     frame2.place_forget()
     frame3.place_forget()
     frame4.place_forget()
+    frame5.place_forget()
+    frame7.place_forget()
+    frame6.place(relwidth=0.18, relheight=0.2, relx=0.8,
+                 rely=0.05)
     frame1.grid(pady=0, padx=0)
     frame1.place(relwidth=1, relheight=1, relx=0, rely=0)
 
@@ -49,22 +55,42 @@ def classesmenu():
     frame1.place_forget()
     frame3.place_forget()
     frame4.place_forget()
+    frame6.place_forget()
+    frame7.place_forget()
     frame2.grid(pady=0, padx=0)
     frame2.place(relwidth=1, relheight=1, relx=0, rely=0)
+    frame5.place(relx=0.05, rely=0.42, relwidth=0.96, relheight=0.4)
 
 
 def aboutmenu():
     frame1.place_forget()
     frame2.place_forget()
     frame4.place_forget()
+    frame5.place_forget()
+    frame6.place_forget()
+    frame7.place_forget()
     frame3.grid(pady=0, padx=0)
     frame3.place(relwidth=1, relheight=1, relx=0, rely=0)
+
+
+def updatesmenu():
+    frame1.place_forget()
+    frame2.place_forget()
+    frame3.place_forget()
+    frame4.place_forget()
+    frame5.place_forget()
+    frame6.place_forget()
+    frame7.grid(pady=0, padx=0)
+    frame7.place(relwidth=1, relheight=1, relx=0, rely=0)
 
 
 def helpmenu():
     frame1.place_forget()
     frame2.place_forget()
     frame3.place_forget()
+    frame5.place_forget()
+    frame6.place_forget()
+    frame7.place_forget()
     frame4.grid(pady=0, padx=0)
     frame4.place(relwidth=1, relheight=1, relx=0, rely=0)
 
@@ -83,6 +109,7 @@ classtab.add_command(label="View/Edit Classes", command=classesmenu)
 
 menu1.add_cascade(label="About", menu=about)
 about.add_command(label="About Online Class Helper", command=aboutmenu)
+about.add_command(label="Updates", command=updatesmenu)
 
 menu1.add_cascade(label="Help", menu=helptab)
 helptab.add_command(label="Contact", command=helpmenu)
@@ -107,6 +134,7 @@ frame4 = Frame(root, bg="black")  # Help
 frame6 = tk.Frame(frame1, bg="#2B2B26")  # NextClass
 frame6.place(relwidth=0.18, relheight=0.2, relx=0.8,
              rely=0.05)
+frame7 = Frame(root, bg="black")  # Updates
 
 root.title('Online Class Helper')  # Text to display on the title bar of the application
 root.state('zoomed')  # Opens the maximised version of the window by default
@@ -145,6 +173,28 @@ pickle_in.close()
 
 
 # Functions
+
+def check_updates(close):
+    try:
+        response = requests.get(
+            'https://raw.githubusercontent.com/vens8/Online-Class-Helper/main/VERSION.txt')
+        latest = response.text.partition('\n')[0]  # Because GitHub appends an empty line at the end
+        if latest > __version__:
+            messagebox.showinfo('Software Update', 'Update Available!')
+            toupdate = messagebox.askyesno('Update Available', f'{__AppName__} {__version__} needs to update to version {latest}')
+            if toupdate is True:
+                webbrowser.open_new_tab('https://github.com/vens8/Online-Class-Helper/blob/main/OCH_setup.exe?raw=true')
+                root.destroy()
+            else:
+                pass
+        else:
+            if close == 1:
+                messagebox.showinfo('Software Update', 'No updates available. This is the latest version.')
+    except Exception as e:
+        messagebox.showinfo('Software Update', 'Unable to check for update, Error:' + str(e))
+
+check_updates(0)
+
 
 def load_file():
     global data, classes
@@ -314,6 +364,7 @@ def JoinNext():
     classes = pickle.load(pickle_in)
     pickle_in.close()
     if len(classes) == 0:
+        button8['state'] = 'disabled'
         messagebox.showinfo("Invalid records", "Please fill the table using a valid template.")
         return
     else:
@@ -377,6 +428,8 @@ def addclass(event=None):
                                 url = "http://" + entry4.get()
                             else:
                                 url = "http://www." + entry4.get()
+                        else:
+                            url = entry4.get()
                         for i in classes:
                             if i[0] == days.index(combo1.get()) - 1:
                                 newdata = [entry1.get(), entry2.get(), entry3.get(), url]
@@ -516,6 +569,7 @@ def updateClass():
             messagebox.showinfo("Unable to update", "Make sure you're only selecting classes and not the day headings.")
     else:
         messagebox.showinfo("No record selected", "Please select a record that you want to update.")
+    button8['state'] = 'disabled'
 
 
 def all_clear():
@@ -535,7 +589,7 @@ message1 = Message(frame1, text="", font=('Verdana', 15), borderwidth=2, bg="bla
 message1.grid(sticky=N + E + W + S)
 message1.grid_rowconfigure(0, weight=100)
 message1.grid_columnconfigure(0, weight=100)
-message1.place(relx=0.425, rely=0.55)
+message1.place(relx=0.4, rely=0.55)
 
 # Message2
 message2 = Message(frame6, bg="#2B2B26", fg="yellow", text="", relief=FLAT, justify="left", font=('Verdana', 11),
@@ -543,7 +597,7 @@ message2 = Message(frame6, bg="#2B2B26", fg="yellow", text="", relief=FLAT, just
 message2.grid(sticky=N + E + W + S)
 message2.grid_rowconfigure(0, weight=100)
 message2.grid_columnconfigure(0, weight=100)
-message2.place(relx=0.1, rely=0.2)
+message2.place(relx=0.08, rely=0.2)
 clock()  # Call the function clock which recursively calls itself every second.
 
 # Button1
@@ -560,7 +614,7 @@ button2 = Button(frame2, image=img2, command=addclass, borderwidth=0, bg="black"
 button2.grid(sticky=N + E + W + S)
 button2.grid_rowconfigure(0, weight=100)
 button2.grid_columnconfigure(0, weight=100)
-button2.place(relx=0.815, rely=0.335)
+button2.place(relx=0.84, rely=0.335)
 
 # Button3
 img9 = PhotoImage(file="images/ClearButton.png")
@@ -585,7 +639,7 @@ button5 = Button(frame2, image=img11, command=removeAll, borderwidth=0, bg="blac
 button5.grid(sticky=N + E + W + S)
 button5.grid_rowconfigure(0, weight=100)
 button5.grid_columnconfigure(0, weight=100)
-button5.place(relx=0.81, rely=0.92)
+button5.place(relx=0.835, rely=0.92)
 
 # Button6
 img12 = PhotoImage(file="images/EditButton.png")  # add "/" not "\"
@@ -601,7 +655,16 @@ button8 = Button(frame2, image=img13, command=updateClass, borderwidth=0, bg="bl
 button8.grid(sticky=N + E + W + S)
 button8.grid_rowconfigure(0, weight=100)
 button8.grid_columnconfigure(0, weight=100)
-button8.place(relx=0.82, rely=0.25)
+button8.place(relx=0.845, rely=0.25)
+button8['state'] = 'disabled'
+
+# Button10
+img19 = PhotoImage(file="images/CheckForUpdatesButton.png")  # add "/" not "\"
+button10 = Button(frame7, image=img19, command=lambda: check_updates(1), bg="black", relief=FLAT)
+button10.grid(sticky=N + E + W + S)
+button10.grid_rowconfigure(0, weight=100)
+button10.grid_columnconfigure(0, weight=100)
+button10.place(relx=0.42, rely=0.6)
 
 # Combo1
 days = [
@@ -635,7 +698,23 @@ label10 = Label(frame2, image=img17, borderwidth=0, bg="black")
 label10.grid(sticky=N + E + W + S, pady=0, padx=0)
 label10.grid_columnconfigure(0, weight=100)
 label10.grid_rowconfigure(0, weight=100)
-label10.place(relx=0.85, rely=0.07)
+label10.place(relx=0.87, rely=0.07)
+
+logo4 = Image.open("images/OCH_Logo.png")
+logo4 = logo4.resize((200, 196), Image.ANTIALIAS)
+img20 = ImageTk.PhotoImage(logo4)
+label11 = Label(frame7, image=img20, borderwidth=0, bg="black")
+label11.grid(sticky=N + E + W + S, pady=0, padx=0)
+label11.grid_columnconfigure(0, weight=100)
+label11.grid_rowconfigure(0, weight=100)
+label11.place(relx=0.438, rely=0.2)
+
+label12 = Label(frame7, text=f"Version {__version__}", font=('Times New Roman', 18), borderwidth=0, bg="black", fg="yellow")
+label12.grid(sticky=N + E + W + S)
+label12.grid_rowconfigure(0, weight=100)
+label12.grid_columnconfigure(0, weight=100)
+label12.place(relheight=0.05, relwidth=0.1, relx=0.448, rely=0.5)
+
 
 # Label Frame (Add Class)
 labelframe1 = LabelFrame(frame2, bg="black", font=("Helvetica", 12), foreground="yellow", text="Add Class")
@@ -726,6 +805,7 @@ label7.grid(sticky=N + E + W + S)
 label7.grid_rowconfigure(0, weight=100)
 label7.grid_columnconfigure(0, weight=100)
 label7.place(relheight=1, relwidth=1)
+
 
 # Combo1 - Drop down menu
 combo1 = ttk.Combobox(labelframe1, value=days, state="readonly", style="TCombobox")
@@ -886,6 +966,6 @@ button7 = Button(frame2, image=img3, command=load_file, borderwidth=0, bg="black
 button7.grid(sticky=N + E + W + S)
 button7.grid_rowconfigure(0, weight=100)
 button7.grid_columnconfigure(0, weight=100)
-button7.place(relx=0.857, rely=0.85)
+button7.place(relx=0.875, rely=0.85)
 
 root.mainloop()
