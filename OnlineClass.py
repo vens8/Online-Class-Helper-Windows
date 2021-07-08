@@ -177,13 +177,13 @@ pickle_in.close()
 def check_updates(close):
     try:
         response = requests.get(
-            'https://raw.githubusercontent.com/vens8/Online-Class-Helper/main/VERSION.txt')
+            'https://raw.githubusercontent.com/vens8/Online-Class-Helper-Windows/main/VERSION.txt')
         latest = response.text.partition('\n')[0]  # Because GitHub appends an empty line at the end
         if latest > __version__:
             messagebox.showinfo('Software Update', 'Update Available!')
             toupdate = messagebox.askyesno('Update Available', f'{__AppName__} {__version__} needs to update to version {latest}')
             if toupdate is True:
-                webbrowser.open_new_tab('https://github.com/vens8/Online-Class-Helper/blob/main/OCH_setup.exe?raw=true')
+                webbrowser.open_new_tab('https://github.com/vens8/Online-Class-Helper-Windows/blob/main/OCH_setup.exe?raw=true')
                 root.destroy()
             else:
                 pass
