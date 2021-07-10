@@ -11,8 +11,7 @@ OCH - Online Class Helper is a tool made for students attending online classes w
 - Make, share and load templates
 
 # Installation
-- Turn off your Antivirus softwares before trying to setup OCH since .exe files without EV code signatures can be triggered by antivirus softwares as malware/trojan. However, you don't have to worry about any harm to your computer because this is only a false positive that triggers the AVs. Make sure you add the .exe file as an exception in your AVs to avoid abrupt deletion of the file by your AVs. You can turn your AVs back on as soon as you've added it as an exception. 
-(The setup .exe file has been detected only by 2 AVs out of 68 on VirusTotal and it's a common issue with converting files using Pyinstaller. It's the fault of the AV vendors for their inaccuracy of malware/trojan detection)
+- Turn off your Antivirus softwares before trying to setup OCH. (More info on why below under "Note")
 
 - Download and run the OCH_setup.exe file.
 
@@ -24,6 +23,9 @@ OCH - Online Class Helper is a tool made for students attending online classes w
 
 # Note
 Do not modify/delete any of the files in the root directory or it will result in the malfunctioning or improper loading of the program
+
+You must turn off your antiviruses .exe files without EV code signatures because some of the innacurate Antiviruses like Avast and Windows defender can be triggered by it and detect the softwares as malware/trojan. However, you don't have to worry about any harm to your computer because this is only a false positive that triggers the AVs. Make sure you add the .exe file as an exception in your AVs to avoid abrupt deletion of the file by your AVs. You can turn your AVs back on as soon as you've added it as an exception. 
+(The setup .exe file has been detected only by 2 AVs out of 68 on VirusTotal and it's a common issue with converting files using Pyinstaller. It's the fault of the AV vendors for their inaccuracy of malware/trojan detection)
 
 # Contact
 For any bugs, issues, help, feature requests, contact me via the Help>>Contact on OCH or my contact details are as follows:
