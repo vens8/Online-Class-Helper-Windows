@@ -11,12 +11,29 @@ import webbrowser
 import requests  # For updates (File reading)
 from tkinter import filedialog as fd
 from PIL import Image, ImageTk
+from win10toast import ToastNotifier
+from configparser import ConfigParser  # Reading .ini file for settings
+
+'''
+Settings:
+    Option to choose what day is the first in the week.
+    Option to set whether users must be prompted to check for updates everytime they open OCH.
+    Option to set whether they want notifications for classes.
+'''
+'''
+Next update: While adding classes, add a unique key to the front of the data file for the application to detect
+if the loaded file is valid and contains classes. This is to prevent users from loading random txt or dat files and 
+corrupting system_values path.
+
+Added feature to close program with Control + W
+Added feature to load only valid files
+'''
 
 __author__ = 'Rahul Maddula'
 __copyright__ = 'Copyright (C) 2021, Ravens Enterprises'
 __credits__ = ['Rahul Maddula']
 __license__ = 'GNU General Public License v3.0'
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 __maintainer__ = 'Rahul Maddula'
 __email__ = 'vensr.maddula@gmail.com'
 __AppName__ = 'OCH'
@@ -28,7 +45,13 @@ current_time = time.strftime("%H:%M:%S")
 record_no = -1  # Default variable
 # use lists to store and load data on the disk with pickle module.
 
+
+def close():
+    root.destroy()
+
+
 root = tk.Tk()
+root.bind("<Control-w>", lambda x: close())  # Close OCH on pressing Control + W
 root.iconbitmap("images/OCH_Logo.ico")
 root.grid_columnconfigure(0, weight=200)
 root.grid_rowconfigure(0, weight=200)
@@ -40,11 +63,9 @@ root.config(menu=menu1)
 
 
 def homemenu():
-    frame2.place_forget()
-    frame3.place_forget()
-    frame4.place_forget()
-    frame5.place_forget()
-    frame7.place_forget()
+    for frame in frames:
+        if frame != frame1 and frame != frame6:
+            frame.place_forget()
     frame6.place(relwidth=0.18, relheight=0.2, relx=0.8,
                  rely=0.05)
     frame1.grid(pady=0, padx=0)
@@ -52,53 +73,58 @@ def homemenu():
 
 
 def classesmenu():
-    frame1.place_forget()
-    frame3.place_forget()
-    frame4.place_forget()
-    frame6.place_forget()
-    frame7.place_forget()
+    for frame in frames:
+        if frame != frame2 and frame != frame5:
+            frame.place_forget()
     frame2.grid(pady=0, padx=0)
     frame2.place(relwidth=1, relheight=1, relx=0, rely=0)
     frame5.place(relx=0.05, rely=0.42, relwidth=0.96, relheight=0.4)
 
 
 def aboutmenu():
-    frame1.place_forget()
-    frame2.place_forget()
-    frame4.place_forget()
-    frame5.place_forget()
-    frame6.place_forget()
-    frame7.place_forget()
+    for frame in frames:
+        if frame != frame3:
+            frame.place_forget()
     frame3.grid(pady=0, padx=0)
     frame3.place(relwidth=1, relheight=1, relx=0, rely=0)
 
 
 def updatesmenu():
-    frame1.place_forget()
-    frame2.place_forget()
-    frame3.place_forget()
-    frame4.place_forget()
-    frame5.place_forget()
-    frame6.place_forget()
+    for frame in frames:
+        if frame != frame7:
+            frame.place_forget()
     frame7.grid(pady=0, padx=0)
     frame7.place(relwidth=1, relheight=1, relx=0, rely=0)
 
 
 def helpmenu():
-    frame1.place_forget()
-    frame2.place_forget()
-    frame3.place_forget()
-    frame5.place_forget()
-    frame6.place_forget()
-    frame7.place_forget()
+    for frame in frames:
+        if frame != frame4:
+            frame.place_forget()
     frame4.grid(pady=0, padx=0)
     frame4.place(relwidth=1, relheight=1, relx=0, rely=0)
 
 
+def settingsmenu():
+    for frame in frames:
+        if frame != frame8:
+            frame.place_forget()
+    frame8.grid(pady=0, padx=0)
+    frame8.place(relwidth=1, relheight=1, relx=0, rely=0)
+
+
+def feedbackmenu():
+    for frame in frames:
+        if frame != frame9:
+            frame.place_forget()
+    frame9.grid(pady=0, padx=0)
+    frame9.place(relwidth=1, relheight=1, relx=0, rely=0)
+
+
 # Menu items
-home = Menu(menu1, tearoff=0)  # Tearoff 0 removes the dashed lines in the menu which opens menu items in another window
+home = Menu(menu1, tearoff=0)  # Tear-off 0 removes the dashed lines in the menu which opens menu items in another window
 classtab = Menu(menu1, tearoff=0)
-about = Menu(menu1, tearoff=0)
+Options = Menu(menu1, tearoff=0)
 helptab = Menu(menu1, tearoff=0)
 
 menu1.add_cascade(label="Home", menu=home)
@@ -107,12 +133,14 @@ home.add_command(label="Go to Online Class Helper", command=homemenu)
 menu1.add_cascade(label="Classes", menu=classtab)
 classtab.add_command(label="View/Edit Classes", command=classesmenu)
 
-menu1.add_cascade(label="About", menu=about)
-about.add_command(label="About Online Class Helper", command=aboutmenu)
-about.add_command(label="Updates", command=updatesmenu)
+menu1.add_cascade(label="Options", menu=Options)
+Options.add_command(label="Settings", command=settingsmenu)
 
 menu1.add_cascade(label="Help", menu=helptab)
+helptab.add_command(label="Updates", command=updatesmenu)
 helptab.add_command(label="Contact", command=helpmenu)
+helptab.add_command(label="Send Feedback", command=feedbackmenu)
+helptab.add_command(label="About Online Class Helper", command=aboutmenu)
 
 # Canvas
 canvas = tk.Canvas(root, height=root.winfo_screenheight(), width=root.winfo_screenwidth(), bg="black")
@@ -131,21 +159,30 @@ frame1.place(relwidth=1, relheight=1)
 frame2 = Frame(root, bg="black")  # Classes
 frame3 = Frame(root, bg="black")  # About
 frame4 = Frame(root, bg="black")  # Help
-frame6 = tk.Frame(frame1, bg="#2B2B26")  # NextClass
+frame6 = tk.Frame(frame1, bg="#2B2B26")  # Next Class
 frame6.place(relwidth=0.18, relheight=0.2, relx=0.8,
              rely=0.05)
 frame7 = Frame(root, bg="black")  # Updates
+frame8 = Frame(root, bg="black")  # Settings
+frame9 = Frame(root, bg="black")  # Feedback
 
 root.title('Online Class Helper')  # Text to display on the title bar of the application
 root.state('zoomed')  # Opens the maximised version of the window by default
 
+
 # Data
+
+system_in = open("data/settings.dat", "rb")
+settings = pickle.load(system_in)
+system_in.close()
+data = settings['data_location']
+
 
 # [day, [subject, start_time, end_time, class_link]]
 # Uncomment the below code to fill the data file with an empty template
 '''
 classes_empty = [
-    [0, []],
+    [0, [1]],
     [1, []],
     [2, []],
     [3, []],
@@ -157,15 +194,13 @@ pickle_out = open(data, "wb")
 pickle.dump(classes_empty, pickle_out)
 pickle_out.close()
 '''
+
 '''
-system_out = open("data/system_values.dat", "wb")
-pickle.dump("data/data.dat", system_out)
+settings = {'data_location': 'data/data.dat', 'day': 1, 'prompt': True, 'notifications': True}
+system_out = open("data/settings.dat", "wb")
+pickle.dump(settings, system_out)
 system_out.close()
 '''
-
-system_in = open("data/system_values.dat", "rb")
-data = pickle.load(system_in)
-system_in.close()
 
 pickle_in = open(data, "rb")
 classes = pickle.load(pickle_in)
@@ -174,44 +209,60 @@ pickle_in.close()
 
 # Functions
 
-def check_updates(close):
+def check_updates(close):  # close variable is to differentiate from button call and automatic prompt at startup
     try:
         response = requests.get(
             'https://raw.githubusercontent.com/vens8/Online-Class-Helper-Windows/main/VERSION.txt')
         latest = response.text.partition('\n')[0]  # Because GitHub appends an empty line at the end
         if latest > __version__:
             messagebox.showinfo('Software Update', 'Update Available!')
-            toupdate = messagebox.askyesno('Update Available', f'{__AppName__} {__version__} needs to update to version {latest}')
+            toupdate = messagebox.askyesno('Update Available',
+                                           f'{__AppName__} {__version__} needs to update to version {latest}')
             if toupdate is True:
-                webbrowser.open_new_tab('https://github.com/vens8/Online-Class-Helper-Windows/blob/main/OCH_setup.exe?raw=true')
+                webbrowser.open_new_tab(
+                    'https://github.com/vens8/Online-Class-Helper-Windows/blob/main/OCH_setup.exe?raw=true')
                 root.destroy()
-            else:
-                pass
         else:
             if close == 1:
-                messagebox.showinfo('Software Update', 'No updates available. This is the latest version.')
+                messagebox.showinfo('Software Update',
+                                    f"No updates available. You're using the latest version.\n{__AppName__} {__version__}")
     except Exception as e:
-        messagebox.showinfo('Software Update', 'Unable to check for update, Error:' + str(e))
+        messagebox.showinfo('Error Updating', 'Unable to check for update, please check your internet connection!')
 
-check_updates(0)
+
+if settings['prompt']:
+    check_updates(0)
 
 
 def load_file():
-    global data, classes
+    global data, classes, settings
     filetypes = (
         ('DAT files', '*.dat'),
-        ('text files', '*.txt'),
-        ('All files', '*.*')
+        ('text files', '*.txt')
     )
-    data = fd.askopenfilename(filetypes=filetypes)
-    system_out = open("data/system_values.dat", "wb")  # Change the value in the DAT file
-    pickle.dump(data, system_out)
-    system_out.close()
-
-    pickle_in = open(data, "rb")
-    classes = pickle.load(pickle_in)
-    pickle_in.close()
-    fill_table()
+    temp_data = fd.askopenfilename(filetypes=filetypes)  # Store in temporary variable to not disturb 'data' global.
+    if len(temp_data) > 0:
+        try:
+            pickle_in = open(temp_data, "rb")
+            temp_classes = pickle.load(pickle_in)
+            pickle_in.close()
+            if isinstance(temp_classes, list) and len(temp_classes) == 7:
+                data = temp_data
+                system_out = open("data/settings.dat", "wb")  # Change the value in the DAT file
+                settings['data_location'] = data  # Update the location of data file
+                pickle.dump(settings, system_out)
+                system_out.close()
+                pickle_in = open(data, "rb")
+                classes = pickle.load(pickle_in)
+                pickle_in.close()
+                fill_table()
+            else:
+                messagebox.showinfo('Invalid file',
+                                    "The file you're trying to load is not supported. Try loading another file.")
+        except IndexError:
+            print("No file selected.")
+    else:
+        print("No file selected.")
 
 
 def sortRecords():
@@ -331,8 +382,8 @@ def CreateToolTip(widget, text):
     def leave(event):
         toolTip.hidetip()
 
-    widget.bind('<Enter>', enter)
-    widget.bind('<Leave>', leave)
+    widget.bind('<Enter>', enter)  # To show the tool tip when the cursor enters the widget
+    widget.bind('<Leave>', leave)  # To stop showing the tool tip when the cursor moves away from the widget
 
 
 def Join():
@@ -480,13 +531,13 @@ def removeClass():
             messagebox.showinfo("Unable to delete", "Make sure you're only selecting classes and not the day headings.")
     else:
         messagebox.showinfo("No record selected",
-                            "Please select a record that you want to delete. (Can't delete air btw)")
+                            "Please select a record that you want to delete. (Can't delete emptiness)")
 
 
 def removeAll():
     global classes, data
     result = messagebox.askquestion("Clear Table",
-                                    "Are you sure you want to delete the entire table? (There's no undo here)",
+                                    "Are you sure you want to delete the entire table? (There's no undo though)",
                                     icon='warning', default='no')
     if result == 'yes':
         for record in tree1.get_children():
@@ -583,6 +634,30 @@ def all_clear():
     entry4.insert(0, "--valid url--")
 
 
+# Save settings onto settings.dat
+cb1 = tk.IntVar()
+cb2 = tk.IntVar()
+
+
+def savesettings():
+    global settings
+    system_out = open("data/settings.dat", "wb")  # Change the value in the DAT file
+    settings['prompt'] = cb1.get()  # Update prompt setting
+    settings['day'] = combo2.current()  # Update first day of the week setting
+    settings['notifications'] = cb2.get()  # Update notifications setting
+    pickle.dump(settings, system_out)
+    system_out.close()
+
+    # Label15
+    label15 = Label(frame8, bg="black", fg="yellow", text="Settings saved.", font=('Verdana', 11, 'italic'))
+    label15.grid(sticky=N + E + W + S, pady=0, padx=0)
+    label15.grid_columnconfigure(0, weight=100)
+    label15.grid_rowconfigure(0, weight=100)
+    label15.place(relx=0.875, rely=0.9)
+    frame8.update_idletasks()
+    frame8.after(2000, label15.place_forget())
+
+
 # Message1
 message1 = Message(frame1, text="", font=('Verdana', 15), borderwidth=2, bg="black", fg="yellow", justify="left",
                    aspect=int(root.winfo_screenwidth() / 2))
@@ -640,6 +715,7 @@ button5.grid(sticky=N + E + W + S)
 button5.grid_rowconfigure(0, weight=100)
 button5.grid_columnconfigure(0, weight=100)
 button5.place(relx=0.835, rely=0.92)
+CreateToolTip(button5, "Clear the table")
 
 # Button6
 img12 = PhotoImage(file="images/EditButton.png")  # add "/" not "\"
@@ -648,6 +724,7 @@ button6.grid(sticky=N + E + W + S)
 button6.grid_rowconfigure(0, weight=100)
 button6.grid_columnconfigure(0, weight=100)
 button6.place(relx=0.05, rely=0.85)
+CreateToolTip(button6, "Select a class and make changes")
 
 # Button8
 img13 = PhotoImage(file="images/UpdateClassButton.png")  # add "/" not "\"
@@ -665,6 +742,15 @@ button10.grid(sticky=N + E + W + S)
 button10.grid_rowconfigure(0, weight=100)
 button10.grid_columnconfigure(0, weight=100)
 button10.place(relx=0.42, rely=0.6)
+
+# Button11
+img24 = PhotoImage(file="images/savebutton.png")  # add "/" not "\"
+button11 = Button(frame8, image=img24, command=savesettings, bg="black", relief=FLAT)
+button11.grid(sticky=N + E + W + S)
+button11.grid_rowconfigure(0, weight=100)
+button11.grid_columnconfigure(0, weight=100)
+button11.place(relx=0.45, rely=0.9)
+
 
 # Combo1
 days = [
@@ -701,25 +787,30 @@ label10.grid_rowconfigure(0, weight=100)
 label10.place(relx=0.87, rely=0.07)
 
 logo4 = Image.open("images/OCH_Logo.png")
-logo4 = logo4.resize((200, 196), Image.ANTIALIAS)
+logo4 = logo4.resize((200, 220), Image.ANTIALIAS)
 img20 = ImageTk.PhotoImage(logo4)
 label11 = Label(frame7, image=img20, borderwidth=0, bg="black")
 label11.grid(sticky=N + E + W + S, pady=0, padx=0)
 label11.grid_columnconfigure(0, weight=100)
 label11.grid_rowconfigure(0, weight=100)
-label11.place(relx=0.438, rely=0.2)
+label11.place(relx=0.438, rely=0.15)
 
-label12 = Label(frame7, text=f"Version {__version__}", font=('Times New Roman', 18), borderwidth=0, bg="black", fg="yellow")
+label12 = Label(frame7, text=f"Version {__version__}", font=('Times New Roman', 18), borderwidth=0, bg="black",
+                fg="yellow")
 label12.grid(sticky=N + E + W + S)
 label12.grid_rowconfigure(0, weight=100)
 label12.grid_columnconfigure(0, weight=100)
 label12.place(relheight=0.05, relwidth=0.1, relx=0.448, rely=0.5)
 
-
 # Label Frame (Add Class)
 labelframe1 = LabelFrame(frame2, bg="black", font=("Helvetica", 12), foreground="yellow", text="Add Class")
 labelframe1.grid(sticky=N + E + W + S)
 labelframe1.place(relwidth=0.75, relheight=0.25, relx=0.05, rely=0.13)
+
+# Label Frame (Settings)
+labelframe2 = LabelFrame(frame8, bg="black", font=("Helvetica", 12), foreground="yellow", text="Settings")
+labelframe2.grid(sticky=N + E + W + S)
+labelframe2.place(relwidth=0.9, relheight=0.75, relx=0.05, rely=0.13)
 
 # Label1
 img4 = PhotoImage(file="images/ChooseDayLabel.png")
@@ -744,6 +835,47 @@ label3.grid(sticky=N + E + W + S)
 label3.grid_rowconfigure(0, weight=100)
 label3.grid_columnconfigure(0, weight=100)
 label3.place(relx=0.36, rely=0.18)
+
+# CheckButton1
+img21 = PhotoImage(file="images/promptbutton.png")  # add "/" not "\"
+checkbutton1 = Checkbutton(labelframe2, bg="black", image=img21, relief=FLAT, variable=cb1)
+if settings['prompt']:
+    checkbutton1.select()
+else:
+    checkbutton1.deselect()
+checkbutton1.grid(sticky=N + E + W + S)
+checkbutton1.grid_rowconfigure(0, weight=100)
+checkbutton1.grid_columnconfigure(0, weight=100)
+checkbutton1.place(relx=0.02, rely=0.1)
+
+# Label14
+img22 = PhotoImage(file="images/daylabel.png")  # add "/" not "\"
+label14 = Label(labelframe2, bg="black", image=img22, relief=FLAT, highlightcolor='yellow')
+label14.grid(sticky=N + E + W + S)
+label14.grid_rowconfigure(0, weight=100)
+label14.grid_columnconfigure(0, weight=100)
+label14.place(relx=0.035, rely=0.3)
+
+# Combo2 - Drop down menu
+combo2 = ttk.Combobox(labelframe2, value=days, state="readonly", style="TCombobox")
+combo2.current(settings['day'])
+combo2.bind("<<ComboboxSelected>>", None)
+combo2.grid(sticky=N + E + W + S)
+combo2.grid_rowconfigure(0, weight=100)
+combo2.grid_columnconfigure(0, weight=100)
+combo2.place(relx=0.05, rely=0.4, relwidth=0.165)
+
+# CheckButton2
+img23 = PhotoImage(file="images/notificationbutton.png")  # add "/" not "\"
+checkbutton2 = Checkbutton(labelframe2, bg="black", image=img23, relief=FLAT, variable=cb2)
+if settings['notifications']:
+    checkbutton2.select()
+else:
+    checkbutton2.deselect()
+checkbutton2.grid(sticky=N + E + W + S)
+checkbutton2.grid_rowconfigure(0, weight=100)
+checkbutton2.grid_columnconfigure(0, weight=100)
+checkbutton2.place(relx=0.35, rely=0.1)
 
 # Label4
 img7 = PhotoImage(file="images/EndTimeLabel.png")
@@ -805,7 +937,6 @@ label7.grid(sticky=N + E + W + S)
 label7.grid_rowconfigure(0, weight=100)
 label7.grid_columnconfigure(0, weight=100)
 label7.place(relheight=1, relwidth=1)
-
 
 # Combo1 - Drop down menu
 combo1 = ttk.Combobox(labelframe1, value=days, state="readonly", style="TCombobox")
@@ -876,6 +1007,17 @@ frame5.grid(sticky=N + E + W + S, row=0, column=0, pady=0, padx=0)
 frame5.grid_rowconfigure(0, weight=1)
 frame5.grid_columnconfigure(0, weight=1)
 frame5.place(relx=0.05, rely=0.42, relwidth=0.96, relheight=0.4)
+
+frames = [frame1,
+          frame2,
+          frame3,
+          frame4,
+          frame5,
+          frame6,
+          frame7,
+          frame8,
+          frame9
+          ]
 
 # Scrollbar
 scrollbar1 = ttk.Scrollbar(frame5, orient=VERTICAL)
