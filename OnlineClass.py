@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import *
 from tkinter import messagebox
+from tkinter import scrolledtext
 from tkinter import ttk
 from datetime import *
 import sys
@@ -12,7 +13,11 @@ import requests  # For updates (File reading)
 from tkinter import filedialog as fd
 from PIL import Image, ImageTk
 from win10toast import ToastNotifier
-from configparser import ConfigParser  # Reading .ini file for settings
+import winrt.windows.ui.notifications as notifications
+import winrt.windows.data.xml.dom as dom
+import smtplib, ssl  # For feedback: emails
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 '''
 Settings:
@@ -33,7 +38,7 @@ __author__ = 'Rahul Maddula'
 __copyright__ = 'Copyright (C) 2021, Ravens Enterprises'
 __credits__ = ['Rahul Maddula']
 __license__ = 'GNU General Public License v3.0'
-__version__ = "1.0.1"
+__version__ = "1.1.0"
 __maintainer__ = 'Rahul Maddula'
 __email__ = 'vensr.maddula@gmail.com'
 __AppName__ = 'OCH'
@@ -43,6 +48,8 @@ now = datetime.now()  # Doesn't update with change of time. Uses same value from
 today = date.today().weekday()  # 0 is Monday and 6 is Sunday
 current_time = time.strftime("%H:%M:%S")
 record_no = -1  # Default variable
+notified = False  # To display the notification only once
+notified_list = []
 # use lists to store and load data on the disk with pickle module.
 
 
@@ -171,12 +178,37 @@ root.state('zoomed')  # Opens the maximised version of the window by default
 
 
 # Data
-
 system_in = open("data/settings.dat", "rb")
 settings = pickle.load(system_in)
 system_in.close()
 data = settings['data_location']
 
+# Combo1 and Combo2
+days = [
+    "--Select Day--",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+    "Sunday"
+]
+
+user_days = ["--Select Day--"]  # user_days is the list of days in the order of user's choice
+
+for i in range(settings['day'], len(days)):
+    user_days.append(days[i])
+for i in range(1, settings['day']):
+    user_days.append(days[i])
+
+# Combo3
+minutes = [
+    0,
+    5,
+    10,
+    15
+]
 
 # [day, [subject, start_time, end_time, class_link]]
 # Uncomment the below code to fill the data file with an empty template
@@ -196,7 +228,7 @@ pickle_out.close()
 '''
 
 '''
-settings = {'data_location': 'data/data.dat', 'day': 1, 'prompt': True, 'notifications': True}
+settings = {'data_location': 'data/data.dat', 'day': 1, 'prompt': True, 'notifications': True, 'noti_time': 1, 'launch': True}
 system_out = open("data/settings.dat", "wb")
 pickle.dump(settings, system_out)
 system_out.close()
@@ -227,7 +259,10 @@ def check_updates(close):  # close variable is to differentiate from button call
                 messagebox.showinfo('Software Update',
                                     f"No updates available. You're using the latest version.\n{__AppName__} {__version__}")
     except Exception as e:
-        messagebox.showinfo('Error Updating', 'Unable to check for update, please check your internet connection!')
+        if close == 1:
+            messagebox.showinfo('Error Updating', 'Unable to check for update, please check your internet connection!')
+        else:
+            messagebox.showinfo('Error Updating', 'Unable to check for update, please check your internet connection!\nYou can turn this off in settings.')
 
 
 if settings['prompt']:
@@ -276,7 +311,7 @@ def sortRecords():
 
 def live_status():
     message2.config(text=live_status2())
-    global classes, data
+    global classes, data, notified, notified_list
     pickle_in = open(data, "rb")  # reads the dat file for records
     classes = pickle.load(pickle_in)
     pickle_in.close()
@@ -291,7 +326,35 @@ def live_status():
                 for j in i[1]:
                     if current_time >= j[1] and current_time < j[2]:
                         status = f"Current class:        {j[0]}\nStart time:            {j[1]}\nEnd time:              {j[2]}\n"
+                        for a in classes:
+                            for b in a[1]:
+                                if settings['notifications'] and notified == False and time_diff(b[1], current_time) == int(
+                                        minutes[settings['noti_time']]) * 60:
+                                    if settings['launch']:
+                                        notify(f"{b[0]} class starts in {minutes[settings['noti_time']]} minutes!",
+                                               "Launching to your class now...", b[3], settings['launch'])
+                                    else:
+                                        notify(f"{b[0]} class starts in {minutes[settings['noti_time']]} minutes!",
+                                               "Click to open OCH.", b[3], settings['launch'])
+                                    if not notified_list:
+                                        notified_list.append(current_time)
+                                        notified = True
+                                if current_time not in notified_list:
+                                    notified_list.clear()
+                                    notified = False
                         return status
+                    elif settings['notifications'] and notified == False and time_diff(j[1], current_time) == int(minutes[settings['noti_time']]) * 60:
+                        print(j[1], time_diff(j[1], current_time))
+                        if settings['launch']:
+                            notify(f"{j[0]} class starts in {minutes[settings['noti_time']]} minutes!", "Launching to your class now...", j[3], settings['launch'])
+                        else:
+                            notify(f"{j[0]} class starts in {minutes[settings['noti_time']]} minutes!", "Click to open OCH.", j[3], settings['launch'])
+                        if not notified_list:
+                            notified_list.append(current_time)
+                            notified = True
+                    if current_time not in notified_list:
+                        notified_list.clear()
+                        notified = False
                 status = f"No ongoing class currently"
                 return status
         status = f"No ongoing class currently"
@@ -432,7 +495,7 @@ def JoinNext():
                     if k[1] > current_time:
                         webbrowser.open(k[3], new=2)  # new = 2 opens a new tab in the default browser (if possible)
                         return
-                messagebox.showinfo("Noo class", "There's no class now, relax.")
+                messagebox.showinfo("No class", "There's no class now, relax.")
                 return
         messagebox.showinfo("No class", "There's no class now, relax.")
         return
@@ -442,15 +505,19 @@ def addclass(event=None):
     global classes, url
     if combo1.get() == "--Select Day--":
         messagebox.showinfo("Invalid day", "Please select a valid day (Monday-Sunday)")
+        if event == 1:
+            return 0
     else:
         if entry1.get() == "":
             messagebox.showinfo("Empty subject", "Please type a subject in the input field")
+            if event == 1:
+                return 0
         else:
             if (entry2.get() == "hh:mm (24 hour format)" or entry2.get() == "" or len(entry2.get().split(":")) < 2
                 or not entry2.get().split(":")[0].isdecimal() or not entry2.get().split(":")[1].isdecimal()
                 or len(entry2.get().split(":")[1]) < 2 or int(entry2.get().split(":")[0]) < 0 or int(
-                        entry2.get().split(":")[0]) > 24
-                or int(entry2.get().split(":")[1]) < 0 or int(entry2.get().split(":")[1]) > 60) or (
+                        entry2.get().split(":")[0]) > 23
+                or int(entry2.get().split(":")[1]) < 0 or int(entry2.get().split(":")[1]) > 59) or (
                     entry3.get() == "hh:mm (24 hour format)"
                     or entry3.get() == "" or len(entry3.get().split(":")) < 2 or not entry3.get().split(":")[
                 0].isdecimal()
@@ -458,6 +525,8 @@ def addclass(event=None):
                     or int(entry3.get().split(":")[0]) < 0 or int(entry3.get().split(":")[0]) > 24
                     or int(entry3.get().split(":")[1]) < 0 or int(entry3.get().split(":")[1]) > 60):
                 messagebox.showinfo("Invalid time format", "Please type a 24 hour time format (hh:mm)")
+                if event == 1:
+                    return 0
             else:
                 if int(entry2.get().split(":")[0]) < 10 and len(entry2.get().split(":")[0]) == 1:
                     entry2.insert(0, '0')
@@ -470,15 +539,24 @@ def addclass(event=None):
                 if entry2.get() > entry3.get():
                     messagebox.showinfo("Invalid value",
                                         "End time must be a time after start time. Imagine attending classes backwards.")
+                    if event == 1:
+                        return 0
+                elif entry2.get() == entry3.get():
+                    messagebox.showinfo("Invalid value",
+                                        "Don't tell me your class lasts less than a minute.")
+                    if event == 1:
+                        return 0
                 else:
                     if "." not in entry4.get() or entry4.get() == "--valid url--":
                         messagebox.showinfo("Invalid URL", "Please enter a valid url (.com, .net, .org, etc.)")
+                        if event == 1:
+                            return 0
                     else:
                         if not entry4.get().startswith('http'):
                             if entry4.get().startswith('www'):
-                                url = "http://" + entry4.get()
+                                url = "https://" + entry4.get()
                             else:
-                                url = "http://www." + entry4.get()
+                                url = "https://www." + entry4.get()
                         else:
                             url = entry4.get()
                         for i in classes:
@@ -498,6 +576,7 @@ def addclass(event=None):
                                     entry3.delete(0, END)
                                     entry4.delete(0, END)
                                     combo1.current(0)
+                                    return 1
 
 
 def removeClass():
@@ -531,7 +610,7 @@ def removeClass():
             messagebox.showinfo("Unable to delete", "Make sure you're only selecting classes and not the day headings.")
     else:
         messagebox.showinfo("No record selected",
-                            "Please select a record that you want to delete. (Can't delete emptiness)")
+                            "Please select a record that you want to delete. (Can't delete void)")
 
 
 def removeAll():
@@ -595,6 +674,7 @@ button9.place(relx=0.25, rely=0.7)
 
 def updateClass():
     global classes, record_no, data
+    error = True  # Assume always error at the beginning
     if tree1.selection() != ():
         if ('0' or '1' or '2' or '3' or '4' or '5' or '6') not in tree1.selection():
             values = tree1.item(record_no)['values']
@@ -605,22 +685,26 @@ def updateClass():
                             j.clear()
                             i[1] = [x for x in i[1] if
                                     x]  # replaces i[1] after removing all empty sub lists in i[1]
-                            addclass()
-                            tree1.delete(record_no)
+                            if addclass(1):  # Error doesn't exist if 1 is returned
+                                tree1.delete(record_no)
+                                error = False
+                            else:
+                                error = True
                             break
                     break
-            delete = open(data, "wb")  # clear existing data from the data file first
-            pickle.dump([], delete)
-            delete.close()
-            pickle_out = open(data, "wb")
-            pickle.dump(classes, pickle_out)
-            pickle_out.close()
-            fill_table()
+            if not error:  # update class only if no error is generated
+                delete = open(data, "wb")  # clear existing data from the data file first
+                pickle.dump([], delete)
+                delete.close()
+                pickle_out = open(data, "wb")
+                pickle.dump(classes, pickle_out)
+                pickle_out.close()
+                fill_table()
+                button8['state'] = 'disabled'
         else:
             messagebox.showinfo("Unable to update", "Make sure you're only selecting classes and not the day headings.")
     else:
         messagebox.showinfo("No record selected", "Please select a record that you want to update.")
-    button8['state'] = 'disabled'
 
 
 def all_clear():
@@ -637,7 +721,8 @@ def all_clear():
 # Save settings onto settings.dat
 cb1 = tk.IntVar()
 cb2 = tk.IntVar()
-
+cb3 = tk.IntVar()
+rb1 = tk.IntVar()
 
 def savesettings():
     global settings
@@ -645,6 +730,12 @@ def savesettings():
     settings['prompt'] = cb1.get()  # Update prompt setting
     settings['day'] = combo2.current()  # Update first day of the week setting
     settings['notifications'] = cb2.get()  # Update notifications setting
+    if cb2.get():
+        settings['noti_time'] = combo3.current()
+        settings['launch'] = cb3.get()
+    else:
+        settings['launch'] = 0
+
     pickle.dump(settings, system_out)
     system_out.close()
 
@@ -656,6 +747,142 @@ def savesettings():
     label15.place(relx=0.875, rely=0.9)
     frame8.update_idletasks()
     frame8.after(2000, label15.place_forget())
+
+
+# Label17
+label17 = Label(frame8, bg="black", fg="yellow", text="Note: Changes will take effect the next time you open OCH", font=('Verdana', 11, 'bold'))
+label17.grid(sticky=N + E + W + S, pady=0, padx=0)
+label17.grid_columnconfigure(0, weight=100)
+label17.grid_rowconfigure(0, weight=100)
+label17.place(relx=0.35, rely=0.1)
+
+
+def notify(title, content, link, automatic):  # pass settings['launch'] as automatic
+    # x = 'PythonSoftwareFoundation.Python.3.9_qbz5n2kfra8p0!Python'
+    # OCH_AUMID = '{7C5A40EF-A0FB-4BFC-874A-C0F2E0B9FA8E}\\OCH\\OCH.exe'
+    # Notifier
+    manager = notifications.ToastNotificationManager
+    notifier = manager.create_toast_notifier();
+
+    # String
+    if automatic:
+        webbrowser.open_new_tab(link)
+        toastString = f"""
+        <toast>
+            <visual>
+                <binding template='ToastGeneric'>
+                    <text>{title}</text>
+                    <text>{content}</text>
+                </binding>
+            </visual>
+            <audio src="ms-winsoundevent:Notification.Mail" loop="false"/>
+            <actions>
+            <action
+                content="Dismiss"
+                arguments="dismiss"
+                activationType="background"/>
+            </actions> 
+        </toast>
+        """
+    else:
+        toastString = f"""
+        <toast>
+            <visual>
+                <binding template='ToastGeneric'>
+                    <text>{title}</text>
+                    <text>{content}</text>
+                </binding>
+            </visual>
+            <audio src="ms-winsoundevent:Notification.Mail" loop="false"/>
+            <actions>
+            <action
+                content="Launch OCH"
+                arguments="action=viewdetails&amp;contentId=351"
+                activationType="background"/>
+            <action
+                content="Dismiss"
+                arguments="dismiss"
+                activationType="background"/>
+            </actions>
+        </toast>
+        """
+
+    # convert notification to an XmlDocument
+    xmlDoc = dom.XmlDocument()
+    xmlDoc.load_xml(toastString)
+
+    # display notification
+    notifier.show(notifications.ToastNotification(xmlDoc))
+
+
+def checkNotification():
+    if cb2.get():
+        checkbutton3['state'] = NORMAL
+        combo3['state'] = 'readonly'
+    else:
+        checkbutton3['state'] = DISABLED
+        combo3['state'] = 'disabled'
+        checkbutton3.deselect()
+
+
+def sendFeedback():
+    feedback = scr1.get('1.0', 'end-1c')
+    if rb1.get() == 1:  # Suggestion
+        type = 0
+    elif rb1.get() == 2:  # Feedback
+        type = 1
+    else:
+        messagebox.showinfo('Error', 'Please choose Suggestion/Feedback')
+        return
+    if not feedback:
+        messagebox.showinfo('Error', "Message can't be empty")
+        return
+    port = 465  # 465 for SSL and 587 for TSL
+    smtp_server = "smtp.gmail.com"
+    sender_email = ""
+    receiver_email = ""
+    password = ""  # Enter email passord
+
+    message = MIMEMultipart("alternative")
+    if type:  # whether feedback/suggestion radio button is selected before sending.
+        message["Subject"] = "Feedback for OCH"
+    else:
+        message["Subject"] = "Suggestion for OCH"
+    message["From"] = sender_email
+    message["To"] = receiver_email
+
+    # Create the plain-text and HTML version of your message
+    text = f"""{feedback}"""
+
+    # Turn these into plain MIMEText objects
+    toAttach = MIMEText(text, "plain")
+    message.attach(toAttach)
+
+    # Create secure connection with server and send email
+    try:
+        context = ssl.create_default_context()
+        with smtplib.SMTP_SSL("smtp.gmail.com", port, context=context) as server:
+            server.login(sender_email, password)
+            server.sendmail(
+                sender_email, receiver_email, message.as_string()
+            )
+            server.quit()
+        scr1.delete(1.0, END)
+        # Label19
+        label19 = Label(frame9, bg="black", fg="yellow", text="Message sent", font=('Verdana', 11, 'italic'))
+        label19.grid(sticky=N + E + W + S, pady=0, padx=0)
+        label19.grid_columnconfigure(0, weight=100)
+        label19.grid_rowconfigure(0, weight=100)
+        label19.place(relx=0.9, rely=0.9)
+        frame9.update_idletasks()
+        frame9.after(2000, label19.place_forget())
+    except Exception as e:
+        messagebox.showinfo('Error Sending', 'Unable to send message, please check your internet connection!')
+
+
+def time_diff(time1, time2):  # Returns the time difference in seconds between time1 and time2 where time1 > time2
+    ftr = [3600, 60, 1]
+    return sum([a * b for a, b in zip(ftr, map(int, time1.split(':')))]) - sum([a * b for a, b in zip(ftr, map(int, time2.split(':')))])
 
 
 # Message1
@@ -751,18 +978,46 @@ button11.grid_rowconfigure(0, weight=100)
 button11.grid_columnconfigure(0, weight=100)
 button11.place(relx=0.45, rely=0.9)
 
+# Button12
+img27 = PhotoImage(file="images/SendButton.png")  # add "/" not "\"
+button12 = Button(frame9, image=img27, command=sendFeedback, bg="black", relief=FLAT)
+button12.grid(sticky=N + E + W + S)
+button12.grid_rowconfigure(0, weight=100)
+button12.grid_columnconfigure(0, weight=100)
+button12.place(relx=0.46, rely=0.81)
 
-# Combo1
-days = [
-    "--Select Day--",
-    "Monday",
-    "Tuesday",
-    "Wednesday",
-    "Thursday",
-    "Friday",
-    "Saturday",
-    "Sunday"
-]
+# RadioButton1
+img28 = PhotoImage(file="images/SuggestionLabel.png")  # add "/" not "\"
+radio1 = Radiobutton(frame9, image=img28, variable=rb1, bg="black", value=1, relief=FLAT)
+radio1.grid(sticky=N + E + W + S)
+radio1.grid_rowconfigure(0, weight=100)
+radio1.grid_columnconfigure(0, weight=100)
+radio1.place(relx=0.32, rely=0.38)
+
+# RadioButton2
+img29 = PhotoImage(file="images/FeedbackLabel.png")  # add "/" not "\"
+radio2 = Radiobutton(frame9, image=img29, variable=rb1, bg="black", value=2, relief=FLAT)
+radio2.grid(sticky=N + E + W + S)
+radio2.grid_rowconfigure(0, weight=100)
+radio2.grid_columnconfigure(0, weight=100)
+radio2.place(relx=0.56, rely=0.38)
+
+# Label18
+feedbacktext = '''Select the type of message you want to send. Any kind of feedback is appreciated.\nThank you for using OCH.'''
+label18 = Label(frame9, bg="black", fg="yellow", text=feedbacktext, font=('Verdana', 11, 'bold'), relief=FLAT)
+label18.grid(sticky=N + E + W + S)
+label18.grid_rowconfigure(0, weight=100)
+label18.grid_columnconfigure(0, weight=100)
+label18.place(relx=0.28, rely=0.3)
+
+# ScrolledText1
+scr1 = scrolledtext.ScrolledText(frame9, wrap=tk.WORD, width=50, height=10, font=("Helvetica", 15), bg="black",
+                                 fg="yellow")
+scr1.configure(insertbackground="yellow")
+scr1.grid(sticky=N+E+W+S, column=0, pady=5, padx=5)  # area widget
+scr1.grid_columnconfigure(0, weight=100)
+scr1.grid_rowconfigure(0, weight=100)
+scr1.place(relx=0.31, rely=0.47)
 
 style.map('TCombobox', fieldbackground=[('readonly', 'green')])
 style.map('TCombobox', selectbackground=[('readonly', 'blue')])
@@ -854,7 +1109,7 @@ label14 = Label(labelframe2, bg="black", image=img22, relief=FLAT, highlightcolo
 label14.grid(sticky=N + E + W + S)
 label14.grid_rowconfigure(0, weight=100)
 label14.grid_columnconfigure(0, weight=100)
-label14.place(relx=0.035, rely=0.3)
+label14.place(relx=0.35, rely=0.1)
 
 # Combo2 - Drop down menu
 combo2 = ttk.Combobox(labelframe2, value=days, state="readonly", style="TCombobox")
@@ -863,11 +1118,11 @@ combo2.bind("<<ComboboxSelected>>", None)
 combo2.grid(sticky=N + E + W + S)
 combo2.grid_rowconfigure(0, weight=100)
 combo2.grid_columnconfigure(0, weight=100)
-combo2.place(relx=0.05, rely=0.4, relwidth=0.165)
+combo2.place(relx=0.56, rely=0.12, relwidth=0.165)
 
 # CheckButton2
-img23 = PhotoImage(file="images/notificationbutton.png")  # add "/" not "\"
-checkbutton2 = Checkbutton(labelframe2, bg="black", image=img23, relief=FLAT, variable=cb2)
+img23 = PhotoImage(file="images/notifybutton.png")  # add "/" not "\"
+checkbutton2 = Checkbutton(labelframe2, bg="black", command=checkNotification, image=img23, relief=FLAT, variable=cb2)
 if settings['notifications']:
     checkbutton2.select()
 else:
@@ -875,7 +1130,46 @@ else:
 checkbutton2.grid(sticky=N + E + W + S)
 checkbutton2.grid_rowconfigure(0, weight=100)
 checkbutton2.grid_columnconfigure(0, weight=100)
-checkbutton2.place(relx=0.35, rely=0.1)
+checkbutton2.place(relx=0.02, rely=0.3)
+
+# Combo3 - Drop down menu
+combo3 = ttk.Combobox(labelframe2, value=minutes, state="readonly", style="TCombobox")
+combo3.current(settings['noti_time'])
+if settings['notifications']:
+    combo3['state'] = 'readonly'
+else:
+    combo3['state'] = 'disabled'
+combo3.bind("<<ComboboxSelected>>", None)
+combo3.grid(sticky=N + E + W + S)
+combo3.grid_rowconfigure(0, weight=100)
+combo3.grid_columnconfigure(0, weight=100)
+combo3.place(relx=0.147, rely=0.325, relwidth=0.05)
+
+# Label16
+img25 = PhotoImage(file="images/beforebutton.png")
+label16 = Label(labelframe2, bg="black", image=img25, command=None, relief=FLAT)
+label16.grid(sticky=N + E + W + S)
+label16.grid_rowconfigure(0, weight=100)
+label16.grid_columnconfigure(0, weight=100)
+label16.place(relx=0.2, rely=0.3)
+
+# CheckButton3
+img26 = PhotoImage(file="images/launchbutton.png")  # add "/" not "\"
+checkbutton3 = Checkbutton(labelframe2, bg="black", image=img26, relief=FLAT, variable=cb3)
+if settings['notifications']:
+    checkbutton3['state'] = NORMAL
+    if settings['launch']:
+        checkbutton3.select()
+    else:
+        checkbutton3.deselect()
+else:
+    checkbutton3['state'] = DISABLED
+    checkbutton3.deselect()
+
+checkbutton3.grid(sticky=N + E + W + S)
+checkbutton3.grid_rowconfigure(0, weight=100)
+checkbutton3.grid_columnconfigure(0, weight=100)
+checkbutton3.place(relx=0.05, rely=0.4)
 
 # Label4
 img7 = PhotoImage(file="images/EndTimeLabel.png")
@@ -939,7 +1233,7 @@ label7.grid_columnconfigure(0, weight=100)
 label7.place(relheight=1, relwidth=1)
 
 # Combo1 - Drop down menu
-combo1 = ttk.Combobox(labelframe1, value=days, state="readonly", style="TCombobox")
+combo1 = ttk.Combobox(labelframe1, value=user_days, state="readonly", style="TCombobox")
 combo1.current(0)
 combo1.bind("<<ComboboxSelected>>", None)
 combo1.grid(sticky=N + E + W + S)
@@ -1000,6 +1294,7 @@ entry4.grid_rowconfigure(0, weight=100)
 entry4.grid_columnconfigure(0, weight=100)
 entry4.bind("<FocusIn>", e4_clear)
 entry4.place(relx=0.79, rely=0.21, relwidth=0.2)
+
 
 # Tree view frame
 frame5 = tk.Frame(frame2, bg="black")
@@ -1067,7 +1362,7 @@ tree1.tag_configure('child', background="#FF5733")
 
 # Table data
 def fill_table():
-    global classes
+    global classes, user_days  # user_days is the list of days in the order of user's choice
     sortRecords()
     for i in tree1.get_children():  # Clear table
         tree1.delete(i)
@@ -1075,29 +1370,32 @@ def fill_table():
     c_count = 0
     for i in classes:
         if id_count % 2 == 0:
-            tree1.insert(parent='', index="end", iid=id_count, open=True, text="", values=(days[i[0] + 1], "", "", ""),
+            tree1.insert(parent='', index="end", iid=id_count, open=True, text="", values=(user_days[i[0] + 1], "", "", ""),
                          tags=('even',))
-            id_count += 1
         else:
-            tree1.insert(parent='', index="end", iid=id_count, open=True, text="", values=(days[i[0] + 1], "", "", ""),
+            tree1.insert(parent='', index="end", iid=id_count, open=True, text="", values=(user_days[i[0] + 1], "", "", ""),
                          tags=('odd',))
-            id_count += 1
+        id_count += 1
         if id_count > 0:
             sep = ttk.Separator(tree1, orient='horizontal')
             sep.grid(sticky="news")
-    for i in classes:
-        for j in i[1]:
-            if c_count < id_count:
-                tree1.insert(parent=f"{c_count}", index="end", iid=id_count, open=False, text="",
-                             values=(j[0], j[1], j[2], j[3]), tags=('child',))
-                id_count += 1
-            else:
+
+    for i in range(1, len(user_days)):
+        if classes[days.index(user_days[i]) - 1][1]:
+            for j in classes[days.index(user_days[i]) - 1][1]:
+                if c_count < id_count:
+                    tree1.insert(parent=f"{c_count}", index="end", iid=id_count, open=False, text="",
+                                 values=(j[0], j[1], j[2], j[3]), tags=('child',))
+                    id_count += 1
+                else:
+                    break
+            c_count += 1
+            if c_count >= id_count:
                 break
-        c_count += 1
-        if c_count >= id_count:
-            break
+        else:
+            c_count += 1
 
-
+            
 fill_table()
 tree1.grid(pady=20, padx=20)
 tree1.place(relx=0, rely=0, relwidth=0.937, relheight=1)
