@@ -843,9 +843,9 @@ def sendFeedback():
         return
     port = 465  # 465 for SSL and 587 for TSL
     smtp_server = "smtp.gmail.com"
-    sender_email = "ravensenterprises8@gmail.com"
-    receiver_email = "ravensenterprises8@gmail.com"
-    password = "zncjynfcmnsuuabx"
+    sender_email = ""  # Sender Gmail account
+    receiver_email = ""  # Receiver Gmail account
+    password = ""  # Mail Password
 
     message = MIMEMultipart("alternative")
     if type:  # whether feedback/suggestion radio button is selected before sending.
