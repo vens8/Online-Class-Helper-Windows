@@ -34,7 +34,7 @@ You must turn off your antiviruses for .exe files without EV code signatures bec
 (The setup .exe file has been detected only by 2 AVs out of 68 on VirusTotal and it's a common issue with converting files using Pyinstaller. It's the fault of the AV vendors for their inaccuracy of malware/trojan detection)
 
 # Contact
-For any bugs, issues, help, feature requests, contact me via the Help>>Contact on OCH or my contact details are as follows:
+For any bugs, issues, help, feature requests, contact me via the 'Send Feedback' menu on OCH or through:
 
 - Personal E-mail: vensr.maddula@gmail.com
 - Personal Instagram: https://www.instagram.com/vens8/
