@@ -1,0 +1,16 @@
+[Updates for OCH 1.1.0]
+
+- Added a settings menu that allows users to make some customizations.
+- Added the notification service that notifies (and launches the class automatically on demand) you at/before class time.
+- Users can choose whether they wanted to be prompted for updates on startup.
+- Option to choose what day is the first day of the user's week.
+- OCH now only loads valid data files to prevent crashing [Fixed minor errors regarding the same].
+- Quickly close OCH with a shortcut key (Ctrl + W).
+- OCH loads and opens up much faster now.
+- You can now send anonymous suggestions/feedback from the Send Feedback menu so we can improve your experience with OCH.
+- Fixed issues with updating OCH.
+- Resolved minor bugs and loopholes.
+
+[Note]
+
+Notifications/launch currently don't work if OCH is closed. This feature will be added in the next update.
