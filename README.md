@@ -4,11 +4,17 @@ Attend online classes with one click!
 OCH - Online Class Helper is a tool made for students attending online classes which allows them to join and attend their classes hassle-free with a single click. Unable to organize all your class links throughout your week? Add your classes once they're organized and tabulated. You can also make and share templates with your friends which can save them time.
 
 # Features
-- Organized Classes
+- Tablulated and organized classes
 
 - Easily add, edit or delete classes
 
 - Make, share and load templates
+
+- Get notified and automatically launch your class
+
+- Easily update to the latest version from within the app
+
+[For all the updates and features added for different versions of OCH, please refer to ReleaseNotes.txt]
 
 # Installation
 - Turn off your Antivirus softwares before trying to setup OCH. (More info on why below under "Note")
