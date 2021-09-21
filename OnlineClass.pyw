@@ -20,20 +20,6 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart  # Send feedback
 from sys import platform  # Check the operating system
 
-'''
-Settings:
-    Option to choose what day is the first in the week.
-    Option to set whether users must be prompted to check for updates everytime they open OCH.
-    Option to set whether they want notifications for classes.
-'''
-'''
-Next update: While adding classes, add a unique key to the front of the data file for the application to detect
-if the loaded file is valid and contains classes. This is to prevent users from loading random txt or dat files and 
-corrupting system_values path.
-
-Added feature to close program with Control + W
-Added feature to load only valid files
-'''
 
 __author__ = 'Rahul Maddula'
 __copyright__ = 'Copyright (C) 2021, Ravens Enterprises'
@@ -332,21 +318,22 @@ def live_status():
                     if current_time >= j[1] and current_time < j[2]:
                         status = f"Current class:        {j[0]}\nStart time:            {j[1]}\nEnd time:              {j[2]}\n"
                         for a in classes:
-                            for b in a[1]:
-                                if settings['notifications'] and notified == False and time_diff(b[1], current_time) == int(
-                                        minutes[settings['noti_time']]) * 60:
-                                    if settings['launch']:
-                                        notify(f"{b[0]} class starts in {minutes[settings['noti_time']]} minutes!",
-                                               "Launching to your class now...", b[3], settings['launch'])
-                                    else:
-                                        notify(f"{b[0]} class starts in {minutes[settings['noti_time']]} minutes!",
-                                               "Click to open OCH.", b[3], settings['launch'])
-                                    if not notified_list:
-                                        notified_list.append(current_time)
-                                        notified = True
-                                if current_time not in notified_list:
-                                    notified_list.clear()
-                                    notified = False
+                            if today == a[0]:
+                                for b in a[1]:
+                                    if settings['notifications'] and notified == False and time_diff(b[1], current_time) == int(
+                                            minutes[settings['noti_time']]) * 60:
+                                        if settings['launch']:
+                                            notify(f"{b[0]} class starts in {minutes[settings['noti_time']]} minutes!",
+                                                   "Launching to your class now...", b[3], settings['launch'])
+                                        else:
+                                            notify(f"{b[0]} class starts in {minutes[settings['noti_time']]} minutes!",
+                                                   "Click to open OCH.", b[3], settings['launch'])
+                                        if not notified_list:
+                                            notified_list.append(current_time)
+                                            notified = True
+                                    if current_time not in notified_list:
+                                        notified_list.clear()
+                                        notified = False
                         return status
                     elif settings['notifications'] and notified == False and time_diff(j[1], current_time) == int(minutes[settings['noti_time']]) * 60:
                         if settings['launch']:
@@ -843,9 +830,9 @@ def sendFeedback():
         return
     port = 465  # 465 for SSL and 587 for TSL
     smtp_server = "smtp.gmail.com"
-    sender_email = ""  # Sender Gmail account
-    receiver_email = ""  # Receiver Gmail account
-    password = ""  # Mail Password
+    sender_email = "xxx@gmail.com"
+    receiver_email = "xxx@gmail.com"
+    password = ""  # Email password
 
     message = MIMEMultipart("alternative")
     if type:  # whether feedback/suggestion radio button is selected before sending.
