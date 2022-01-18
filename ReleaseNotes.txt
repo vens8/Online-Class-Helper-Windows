@@ -14,3 +14,7 @@
 [Note]
 
 Notifications/launch currently don't work if OCH is closed. This feature will be added in the next update.
+
+[Upcoming feature ideas]
+- Temporary Class
+- Calendar like Google's
