@@ -17,4 +17,5 @@ Notifications/launch currently don't work if OCH is closed. This feature will be
 
 [Upcoming feature ideas]
 - Temporary Class
-- Calendar like Google's
+- Calendar like Google's (Using Calendar API)
+- Add class notes/links for books, etc.
