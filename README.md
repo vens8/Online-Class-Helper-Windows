@@ -1,6 +1,8 @@
 # Online-Class-Helper-for-Windows
 Attend online classes with one click!
 
+[Click here for watching the a short video on the application!](https://www.youtube.com/shorts/nmoot-E0AcY)
+
 # About
 OCH - Online Class Helper is a free open-source tool made to aid students attending online classes during the pandemic which allows them to join and attend their classes hassle-free in a single click. 
 
